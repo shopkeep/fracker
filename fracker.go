@@ -5,54 +5,73 @@ import (
 	"github.com/coreos/go-etcd/etcd"
 
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
 )
 
+const DefaultEtcdHost string = "http://127.0.0.1:4001"
+
 func main() {
 	var hosts []string
 	var env string
 	if env = os.Getenv("ETCD_HOSTS"); env == "" {
-		hosts = []string{"http://127.0.0.1:4001"}
+		hosts = []string{DefaultEtcdHost}
 	} else {
 		hosts = strings.Split(env, ",")
 	}
 
 	client := etcd.NewClient(hosts)
+	fracker := NewFracker(client)
 
 	app := cli.NewApp()
 	app.Name = "fracker"
-	app.Usage = "fracker [key...]"
+	app.Usage = "convert etcd hierarchies to environment variables"
 	app.Action = func(ctx *cli.Context) {
-		var err error
-		var resp *etcd.Response
-		envVars := make(map[string]string, 0)
-		for _, key := range ctx.Args() {
-			//for _, key := range os.Args[1:] {
-			if resp, err = client.Get(key, false, true); err != nil {
-				log.Panicln(err)
-			}
-			recurseOverNodes(resp.Node, func(k, v string) {
-				envVars[envVarName(k)] = v
-			})
-		}
-		for key, val := range envVars {
-			fmt.Fprintf(os.Stdout, "%s=%s\n", key, val)
-		}
+		fracker.Frack(os.Stdout, ctx.Args())
 	}
 
 	app.Run(os.Args)
 }
 
+type Fracker interface {
+	Frack(io.Writer, []string)
+}
+
+func NewFracker(client *etcd.Client) Fracker {
+	return &fracker{client}
+}
+
+type fracker struct {
+	client *etcd.Client
+}
+
+func (self *fracker) Frack(out io.Writer, keys []string) {
+	var err error
+	var resp *etcd.Response
+	envVars := make(map[string]string, 0)
+	for _, key := range keys {
+		if resp, err = self.client.Get(key, false, true); err != nil {
+			log.Panicln(err)
+		}
+		readNode(resp.Node, func(k, v string) {
+			envVars[envVarName(k)] = v
+		})
+	}
+	for key, val := range envVars {
+		fmt.Fprintf(out, "%s=%s\n", key, val)
+	}
+}
+
 // recurse over the given node and its children, yielding each non-directory
 // node's key and value to the given function
-func recurseOverNodes(node *etcd.Node, fn func(string, string)) {
+func readNode(node *etcd.Node, fn func(string, string)) {
 	if !node.Dir {
 		fn(node.Key, node.Value)
 	} else {
 		for _, n := range node.Nodes {
-			recurseOverNodes(n, fn)
+			readNode(n, fn)
 		}
 	}
 }
