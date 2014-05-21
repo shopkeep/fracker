@@ -39,12 +39,16 @@ type Fracker interface {
 	Frack(io.Writer, []string)
 }
 
-func NewFracker(client *etcd.Client) Fracker {
+func NewFracker(client EtcdKeyGetter) Fracker {
 	return &fracker{client}
 }
 
+type EtcdKeyGetter interface {
+	Get(string, bool, bool) (*etcd.Response, error)
+}
+
 type fracker struct {
-	client *etcd.Client
+	client EtcdKeyGetter
 }
 
 func (self *fracker) Frack(out io.Writer, keys []string) {
