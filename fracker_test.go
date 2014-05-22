@@ -32,7 +32,7 @@ var _ = Describe("Fracker", func() {
 	BeforeEach(func() {
 		out = bytes.NewBuffer([]byte{})
 		client = &StubEtcd{}
-		fracker = f.NewFracker(client)
+		fracker = f.New(client)
 	})
 
 	Context(`fracking a key that doesn't exist`, func() {
