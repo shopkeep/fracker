@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/codegangsta/cli"
-	"github.com/coreos/go-etcd/etcd"
 
 	"os"
 	"strings"
@@ -19,8 +18,7 @@ func main() {
 		hosts = strings.Split(env, ",")
 	}
 
-	client := etcd.NewClient(hosts)
-	fracker := New(client)
+	fracker := New(NewClient(hosts))
 
 	app := cli.NewApp()
 	app.Name = "fracker"

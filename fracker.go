@@ -1,9 +1,6 @@
 package main
 
 import (
-	// TODO: remove dependence on etcd types, particularly *etcd.Response and *etcd.Node
-	"github.com/coreos/go-etcd/etcd"
-
 	"fmt"
 	"io"
 	"log"
@@ -18,48 +15,29 @@ type Fracker interface {
 }
 
 // New() creates a new Fracker.
-func New(client EtcdKeyGetter) Fracker {
+func New(client EtcdClient) Fracker {
 	return &fracker{client}
 }
 
-// The EtcdKeyGetter interface is to facilitate testing without using a running etcd process.
-// XXX: can this be unexported?
-type EtcdKeyGetter interface {
-	Get(string, bool, bool) (*etcd.Response, error)
-}
-
 type fracker struct {
-	client EtcdKeyGetter
+	client EtcdClient
 }
 
 // Frack() reads the configuration values out of etcd and writes them to stdout. Panics if a requested key
 // is not found in etcd.
 func (self *fracker) Frack(out io.Writer, keys []string) {
-	var err error
-	var resp *etcd.Response
 	envVars := make(map[string]string, 0)
 	for _, key := range keys {
-		if resp, err = self.client.Get(key, false, true); err != nil {
+		if node, err := self.client.Get(key); err != nil {
 			log.Panicln(err)
+		} else {
+			node.Each(func(k, v string) {
+				envVars[self.envVarName(k)] = v
+			})
 		}
-		self.readNode(resp.Node, func(k, v string) {
-			envVars[self.envVarName(k)] = v
-		})
 	}
 	for key, val := range envVars {
 		fmt.Fprintf(out, "%s=%s\n", key, val)
-	}
-}
-
-// recurse over the given node and its children, yielding each non-directory
-// node's key and value to the given function
-func (self *fracker) readNode(node *etcd.Node, fn func(string, string)) {
-	if !node.Dir {
-		fn(node.Key, node.Value)
-	} else {
-		for _, n := range node.Nodes {
-			self.readNode(n, fn)
-		}
 	}
 }
 
