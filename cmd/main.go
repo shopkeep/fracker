@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/codegangsta/cli"
+	"github.com/shopkeep/fracker"
 
 	"log"
 	"os"
@@ -19,13 +20,14 @@ func main() {
 		hosts = strings.Split(env, ",")
 	}
 
-	fracker := New(NewClient(hosts))
+	client := fracker.NewClient(hosts)
+	frk := fracker.New(client)
 
 	app := cli.NewApp()
 	app.Name = "fracker"
 	app.Usage = "convert etcd hierarchies to environment variables"
 	app.Action = func(ctx *cli.Context) {
-		if err := fracker.Frack(os.Stdout, ctx.Args()); err != nil {
+		if err := frk.Frack(os.Stdout, ctx.Args()); err != nil {
 			log.Fatalln(err)
 		}
 	}

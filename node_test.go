@@ -1,4 +1,4 @@
-package main_test
+package fracker_test
 
 import (
 	"github.com/coreos/go-etcd/etcd"

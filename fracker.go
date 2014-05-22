@@ -1,9 +1,8 @@
-package main
+package fracker
 
 import (
 	"fmt"
 	"io"
-	"log"
 	"strings"
 )
 
@@ -29,7 +28,6 @@ func (self *fracker) Frack(out io.Writer, keys []string) error {
 	envVars := make(map[string]string, 0)
 	for _, key := range keys {
 		if node, err := self.client.Get(key); err != nil {
-			log.Println(err)
 			return err
 		} else {
 			node.Each(func(k, v string) {

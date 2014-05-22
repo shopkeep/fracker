@@ -1,4 +1,4 @@
-package main
+package fracker
 
 import (
 	"github.com/coreos/go-etcd/etcd"
