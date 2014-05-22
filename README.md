@@ -31,6 +31,7 @@ FOO_BAZ_WOO=abcd
 FOO_BAZ_HOO=efgh
 ```
 
-Whereas `fracker foo/bar` will only output `FOO_BAR_VAL=1234`.
+Whereas `fracker foo/bar` will only output `FOO_BAR_VAL=1234`. Duplicate keys are output only once with the
+last value read from etcd, meaning `fracker foo/bar foo/bar/val` will only output `FOO_BAR_VAL=1234`.
 
 The output is intended to be redirected into a file such as `/etc/environment` for service configuration.
