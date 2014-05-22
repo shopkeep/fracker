@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/codegangsta/cli"
 
+	"log"
 	"os"
 	"strings"
 )
@@ -24,7 +25,9 @@ func main() {
 	app.Name = "fracker"
 	app.Usage = "convert etcd hierarchies to environment variables"
 	app.Action = func(ctx *cli.Context) {
-		fracker.Frack(os.Stdout, ctx.Args())
+		if err := fracker.Frack(os.Stdout, ctx.Args()); err != nil {
+			log.Fatalln(err)
+		}
 	}
 
 	app.Run(os.Args)

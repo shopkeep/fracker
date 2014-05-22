@@ -13,11 +13,16 @@ var _ = Describe("Fracker", func() {
 	var out *bytes.Buffer
 	var fracker f.Fracker
 	var client *StubEtcd
+	var err error
 
 	BeforeEach(func() {
 		out = bytes.NewBuffer([]byte{})
 		client = &StubEtcd{}
 		fracker = f.New(client)
+	})
+
+	JustBeforeEach(func() {
+		err = fracker.Frack(out, []string{"/foo"})
 	})
 
 	Context(`fracking a key that doesn't exist`, func() {
@@ -27,17 +32,12 @@ var _ = Describe("Fracker", func() {
 			}
 		})
 
-		It(`panics`, func() {
-			lambda := func() { fracker.Frack(out, []string{"foo"}) }
-			Expect(lambda).To(Panic())
+		It(`returns an error`, func() {
+			Expect(err).ToNot(BeNil())
 		})
 	})
 
 	Context(`fracking a key that exists`, func() {
-		JustBeforeEach(func() {
-			fracker.Frack(out, []string{"/foo"})
-		})
-
 		Context(`and is a file`, func() {
 			BeforeEach(func() {
 				client.StubGet = func(key string) (f.Node, error) {
@@ -46,6 +46,10 @@ var _ = Describe("Fracker", func() {
 					})
 					return n, nil
 				}
+			})
+
+			It(`doesn't return an error`, func() {
+				Expect(err).To(BeNil())
 			})
 
 			It(`writes the value out in KEY=VALUE format`, func() {
@@ -62,6 +66,10 @@ var _ = Describe("Fracker", func() {
 					})
 					return n, nil
 				}
+			})
+
+			It(`doesn't return an error`, func() {
+				Expect(err).To(BeNil())
 			})
 
 			It(`writes each value out in KEY=VALUE format`, func() {
