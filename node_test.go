@@ -39,8 +39,9 @@ var _ = Describe("Node", func() {
 		})
 
 		It(`yields the file's name and value`, func() {
-			Expect(valMap).To(HaveKey("/foo"))
-			Expect(valMap["/foo"]).To(Equal("1234"))
+			Expect(valMap).To(Equal(map[string]string{
+				"/foo": "1234",
+			}))
 		})
 	})
 
@@ -80,12 +81,11 @@ var _ = Describe("Node", func() {
 		})
 
 		It(`yields each pair of file names and values`, func() {
-			Expect(valMap).To(HaveKey("/foo/bar"))
-			Expect(valMap).To(HaveKey("/foo/baz/qux"))
-			Expect(valMap).To(HaveKey("/foo/baz/goo"))
-			Expect(valMap["/foo/bar"]).To(Equal("1234"))
-			Expect(valMap["/foo/baz/qux"]).To(Equal("crunch"))
-			Expect(valMap["/foo/baz/goo"]).To(Equal("munch"))
+			Expect(valMap).To(Equal(map[string]string{
+				"/foo/bar":     "1234",
+				"/foo/baz/qux": "crunch",
+				"/foo/baz/goo": "munch",
+			}))
 		})
 	})
 })
