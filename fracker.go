@@ -25,24 +25,35 @@ type fracker struct {
 // Frack() reads the configuration values out of etcd and writes them to stdout. Panics if a requested key
 // is not found in etcd.
 func (self *fracker) Frack(out io.Writer, keys []string) error {
-	envVars := make(map[string]string, 0)
+	env := make(map[string]string, 0)
 	for _, key := range keys {
+		// normalize the key so that it's in a known format
+		key = self.normalizeKeyName(key)
 		if node, err := self.client.Get(key); err != nil {
 			return err
 		} else {
+			if node.IsFile() {
+				return fmt.Errorf("%s is not a directory", key)
+			}
 			node.Each(func(k, v string) {
-				envVars[self.envVarName(k)] = v
+				n := self.etcdPathToEnvVarName(key, k)
+				env[n] = v
 			})
 		}
 	}
-	for key, val := range envVars {
+	for key, val := range env {
 		fmt.Fprintf(out, "%s=%s\n", key, val)
 	}
 	return nil
 }
 
-// turns an etcd key name "/foo/bar" into an environment variable name "FOO_BAR"
-// TODO: replace all non-valid characters with underscores
-func (self *fracker) envVarName(name string) string {
-	return strings.Replace(strings.ToUpper(name[1:]), "/", "_", -1)
+func (self *fracker) normalizeKeyName(key string) string {
+	return "/" + strings.Trim(key, "/") + "/"
+}
+
+func (self *fracker) etcdPathToEnvVarName(prefix, key string) string {
+	str := strings.TrimPrefix(key, prefix)
+	str = strings.ToUpper(str)
+	str = strings.Replace(str, "/", "_", -1)
+	return str
 }

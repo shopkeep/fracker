@@ -41,26 +41,22 @@ var _ = Describe("Fracker", func() {
 		Context(`and is a file`, func() {
 			BeforeEach(func() {
 				client.StubGet = func(key string) (f.Node, error) {
-					n := StubNode(map[string]string{
+					n := NewStubFileNode(map[string]string{
 						"/foo": "crunch",
 					})
 					return n, nil
 				}
 			})
 
-			It(`doesn't return an error`, func() {
-				Expect(err).To(BeNil())
-			})
-
-			It(`writes the value out in KEY=VALUE format`, func() {
-				Expect(out.String()).To(Equal("FOO=crunch\n"))
+			It(`returns an error`, func() {
+				Expect(err).ToNot(BeNil())
 			})
 		})
 
 		Context(`and is a directory`, func() {
 			BeforeEach(func() {
 				client.StubGet = func(key string) (f.Node, error) {
-					n := StubNode(map[string]string{
+					n := NewStubDirNode(map[string]string{
 						"/foo/bar": "crunch",
 						"/foo/baz": "munch",
 					})
@@ -72,8 +68,8 @@ var _ = Describe("Fracker", func() {
 				Expect(err).To(BeNil())
 			})
 
-			It(`writes each value out in KEY=VALUE format`, func() {
-				Expect(out.String()).To(Equal("FOO_BAR=crunch\nFOO_BAZ=munch\n"))
+			It(`writes each value out in KEY=VALUE format (removing the prefix)`, func() {
+				Expect(out.String()).To(Equal("BAR=crunch\nBAZ=munch\n"))
 			})
 		})
 	})

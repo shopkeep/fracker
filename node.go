@@ -6,6 +6,7 @@ import (
 
 type Node interface {
 	Each(func(string, string))
+	IsFile() bool
 }
 
 func NewNode(n *etcd.Node) Node {
@@ -28,8 +29,16 @@ func (self *dirNode) Each(fn func(string, string)) {
 	}
 }
 
+func (self *dirNode) IsFile() bool {
+	return false
+}
+
 type fileNode node
 
 func (self *fileNode) Each(fn func(string, string)) {
 	fn(self.Node.Key, self.Node.Value)
+}
+
+func (self *fileNode) IsFile() bool {
+	return true
 }
