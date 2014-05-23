@@ -18,12 +18,27 @@ func (self *StubEtcd) Get(key string) (f.Node, error) {
 	return self.StubGet(key)
 }
 
-type StubNode map[string]string
+type StubNode struct {
+	valMap map[string]string
+	isFile bool
+}
 
-func (self StubNode) Each(fn func(string, string)) {
-	for key, value := range self {
+func NewStubFileNode(valMap map[string]string) *StubNode {
+	return &StubNode{isFile: true, valMap: valMap}
+}
+
+func NewStubDirNode(valMap map[string]string) *StubNode {
+	return &StubNode{isFile: false, valMap: valMap}
+}
+
+func (self *StubNode) Each(fn func(string, string)) {
+	for key, value := range self.valMap {
 		fn(key, value)
 	}
+}
+
+func (self *StubNode) IsFile() bool {
+	return self.isFile
 }
 
 func TestFracker(t *testing.T) {
