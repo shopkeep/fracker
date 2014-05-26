@@ -4,6 +4,7 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/shopkeep/fracker"
 
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -26,8 +27,24 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "fracker"
 	app.Usage = "convert etcd hierarchies to environment variables"
+	app.Flags = []cli.Flag{
+		cli.StringFlag{Name: "output", Value: "", Usage: "output file (stdout by default)"},
+	}
+
 	app.Action = func(ctx *cli.Context) {
-		if err := frk.Frack(os.Stdout, ctx.Args()); err != nil {
+		var out io.Writer = os.Stdout
+		var err error
+
+		if ctx.String("output") != "" {
+			out, err = os.Create(ctx.String("output"))
+			if err != nil {
+				log.Fatalln(err)
+			}
+		} else {
+			out = os.Stdout
+		}
+
+		if err := frk.Frack(out, ctx.Args()); err != nil {
 			log.Fatalln(err)
 		}
 	}
