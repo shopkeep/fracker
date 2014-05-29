@@ -29,6 +29,7 @@ func main() {
 	app.Usage = "convert etcd hierarchies to environment variables"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{Name: "output", Value: "", Usage: "output file (stdout by default)"},
+		cli.BoolFlag{Name: "append", Usage: "append to output file instead of overwriting"},
 	}
 
 	app.Action = func(ctx *cli.Context) {
@@ -36,9 +37,16 @@ func main() {
 		var err error
 
 		if ctx.String("output") != "" {
-			out, err = os.Create(ctx.String("output"))
-			if err != nil {
-				log.Fatalln(err)
+			if ctx.Bool("append") {
+				out, err = os.OpenFile(ctx.String("output"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+				if err != nil {
+					log.Fatalln(err)
+				}
+			} else {
+				out, err = os.Create(ctx.String("output"))
+				if err != nil {
+					log.Fatalln(err)
+				}
 			}
 		} else {
 			out = os.Stdout
