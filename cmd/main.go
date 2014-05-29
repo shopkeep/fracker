@@ -39,17 +39,12 @@ func main() {
 		if ctx.String("output") != "" {
 			if ctx.Bool("append") {
 				out, err = os.OpenFile(ctx.String("output"), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-				if err != nil {
-					log.Fatalln(err)
-				}
 			} else {
 				out, err = os.Create(ctx.String("output"))
-				if err != nil {
-					log.Fatalln(err)
-				}
 			}
-		} else {
-			out = os.Stdout
+			if err != nil {
+				log.Fatalln(err)
+			}
 		}
 
 		if err := frk.Frack(out, ctx.Args()); err != nil {
