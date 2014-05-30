@@ -33,7 +33,8 @@ func (self *fracker) Frack(out io.Writer, keys []string) error {
 			return err
 		} else {
 			if node.IsFile() {
-				return fmt.Errorf("%s is not a directory", key)
+				key = key[:len(key)-1]
+				key = key[:strings.LastIndex(key, "/")+1]
 			}
 			node.Each(func(k, v string) {
 				n := self.etcdPathToEnvVarName(key, k)

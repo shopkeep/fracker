@@ -49,7 +49,7 @@ var _ = Describe("Fracker", func() {
 			})
 
 			It(`returns an error`, func() {
-				Expect(err).ToNot(BeNil())
+				Expect(err).To(BeNil())
 			})
 		})
 
