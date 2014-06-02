@@ -27,17 +27,13 @@ type fracker struct {
 func (self *fracker) Frack(out io.Writer, keys []string) error {
 	env := make(map[string]string, 0)
 	for _, key := range keys {
-		// normalize the key so that it's in a known format
-		key = self.normalizeKeyName(key)
 		if node, err := self.client.Get(key); err != nil {
 			return err
 		} else {
-			if node.IsFile() {
-				return fmt.Errorf("%s is not a directory", key)
-			}
 			node.Each(func(k, v string) {
-				n := self.etcdPathToEnvVarName(key, k)
-				env[n] = v
+				k = strings.ToUpper(k)
+				k = strings.Replace(k, "/", "_", -1)
+				env[k] = v
 			})
 		}
 	}
@@ -45,15 +41,4 @@ func (self *fracker) Frack(out io.Writer, keys []string) error {
 		fmt.Fprintf(out, "%s=%s\n", key, val)
 	}
 	return nil
-}
-
-func (self *fracker) normalizeKeyName(key string) string {
-	return "/" + strings.Trim(key, "/") + "/"
-}
-
-func (self *fracker) etcdPathToEnvVarName(prefix, key string) string {
-	str := strings.TrimPrefix(key, prefix)
-	str = strings.ToUpper(str)
-	str = strings.Replace(str, "/", "_", -1)
-	return str
 }
