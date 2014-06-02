@@ -55,6 +55,10 @@ var _ = Describe("fracker", func() {
 				args = strings.Split("fracker --output=foo.env key1 key2 key3", " ")
 			})
 
+			AfterEach(func() {
+				os.Remove("foo.env")
+			})
+
 			It("sets the output to the given file", func() {
 				info, _ := outf.Stat()
 				Expect(info.Name()).To(Equal("foo.env"))
