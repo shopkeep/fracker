@@ -4,10 +4,10 @@ import (
 	"github.com/codegangsta/cli"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	// "github.com/shopkeep/fracker"
 	cmd "github.com/shopkeep/fracker/cmd"
 
 	"io"
+	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -42,7 +42,7 @@ var _ = Describe("fracker", func() {
 
 		Context("when no --output option is given", func() {
 			BeforeEach(func() {
-				args = strings.Split("key1 key2 key3", " ")
+				args = strings.Split("fracker key1 key2 key3", " ")
 			})
 
 			It("sets the output to stdout", func() {
@@ -51,39 +51,36 @@ var _ = Describe("fracker", func() {
 		})
 
 		Context("when an --output option is given", func() {
-			Context("when no --append option is given", func() {
-				BeforeEach(func() {
-					args = strings.Split("--output foo.env key1 key2 key3", " ")
-				})
+			BeforeEach(func() {
+				args = strings.Split("fracker --output=foo.env key1 key2 key3", " ")
+			})
 
-				It("sets the output to the given file", func() {
-					info, _ := outf.Stat()
-					Expect(info.Name()).To(Equal("foo.env"))
+			It("sets the output to the given file", func() {
+				info, _ := outf.Stat()
+				Expect(info.Name()).To(Equal("foo.env"))
+			})
+
+			Context("when the file already exists", func() {
+				BeforeEach(func() {
+					if err := ioutil.WriteFile("foo.env", []byte("woohoo"), 0666); err != nil {
+						panic(err)
+					}
 				})
 
 				It("truncates the given file", func() {
 					info, _ := outf.Stat()
-					Expect(info.Size()).To(Equal(0))
+					Expect(info.Size()).To(Equal(int64(0)))
 				})
 			})
 
-			Context("when the --append option is given", func() {
+			Context("when the file doesn't already exist", func() {
 				BeforeEach(func() {
-					args = strings.Split("--output foo.env --append key1 key2 key3", " ")
-					app.Action = func(ctx *cli.Context) {
-						out, err = cmd.GetOutputFile(ctx)
-						outf, ok = out.(*os.File)
-					}
+					_ = os.Remove("foo.env")
 				})
 
-				It("sets the output to the given file", func() {
-					info, _ := outf.Stat()
-					Expect(info.Name()).To(Equal("foo.env"))
-				})
-
-				It("sets append-only mode on the file", func() {
-					info, _ := outf.Stat()
-					Expect(info.Mode() & os.ModeAppend).ToNot(Equal(0))
+				It("creates the given file", func() {
+					_, err := outf.Stat()
+					Expect(err).To(BeNil())
 				})
 			})
 		})
