@@ -1,0 +1,9 @@
+#!/bin/bash
+
+GO=${1:-go}
+
+echo "Installing code dependencies"
+$GO get './...'
+
+echo "Compiling"
+$GO build -o fracker cmd/main.go
