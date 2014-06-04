@@ -10,11 +10,11 @@ import (
 	"testing"
 )
 
-type StubEtcd struct {
+type TestClient struct {
 	StubGet func(string) (f.Node, error)
 }
 
-func (self *StubEtcd) Get(key string) (f.Node, error) {
+func (self *TestClient) Get(key string) (f.Node, error) {
 	return self.StubGet(key)
 }
 

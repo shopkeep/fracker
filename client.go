@@ -4,11 +4,11 @@ import (
 	"github.com/coreos/go-etcd/etcd"
 )
 
-type EtcdClient interface {
+type Client interface {
 	Get(key string) (Node, error)
 }
 
-func NewClient(hosts []string) EtcdClient {
+func NewClient(hosts []string) Client {
 	return &etcdClient{etcd.NewClient(hosts)}
 }
 

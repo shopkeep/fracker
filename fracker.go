@@ -3,6 +3,7 @@ package fracker
 import (
 	"fmt"
 	"io"
+	"path/filepath"
 	"strings"
 )
 
@@ -14,31 +15,44 @@ type Fracker interface {
 }
 
 // New() creates a new Fracker.
-func New(client EtcdClient) Fracker {
+func New(client Client) Fracker {
 	return &fracker{client}
 }
 
 type fracker struct {
-	client EtcdClient
+	client Client
 }
 
 // Frack() reads the configuration values out of etcd and writes them to stdout. Panics if a requested key
 // is not found in etcd.
 func (self *fracker) Frack(out io.Writer, keys []string) error {
+	var node Node
+	var err error
 	env := make(map[string]string, 0)
+
 	for _, key := range keys {
-		if node, err := self.client.Get(key); err != nil {
+		key = filepath.Clean(key)
+
+		node, err = self.client.Get(key)
+		if err != nil {
 			return err
-		} else {
-			node.Each(func(k, v string) {
-				k = strings.ToUpper(k)
-				k = strings.Replace(k, "/", "_", -1)
-				env[k] = v
-			})
 		}
+
+		node.Each(func(k, v string) {
+			name := strings.TrimPrefix(k, key)
+			if name == "" {
+				name = filepath.Base(k)
+			}
+
+			name = strings.TrimPrefix(name, "/")
+			name = strings.ToUpper(name)
+			name = strings.Replace(name, "/", "_", -1)
+
+			env[name] = v
+		})
 	}
-	for key, val := range env {
-		fmt.Fprintf(out, "%s=%s\n", key, val)
+	for name, val := range env {
+		fmt.Fprintf(out, "%s=%s\n", name, val)
 	}
 	return nil
 }
