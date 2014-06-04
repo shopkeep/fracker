@@ -1,0 +1,10 @@
+#!/bin/bash
+
+GO=${1:-go}
+
+echo "Installing code dependencies"
+$GO get './...'
+$GO get -u -t './...'
+
+echo "Running tests"
+$GO test -cover './...'
