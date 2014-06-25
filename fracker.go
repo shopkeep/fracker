@@ -43,11 +43,9 @@ func (self *fracker) Frack(out io.Writer, keys []string) error {
 			if name == "" {
 				name = filepath.Base(k)
 			}
-
 			name = strings.TrimPrefix(name, "/")
 			name = strings.ToUpper(name)
-			name = strings.Replace(name, "/", "_", -1)
-
+			name = strings.NewReplacer("/", "_", "-", "_").Replace(name)
 			env[name] = v
 		})
 	}

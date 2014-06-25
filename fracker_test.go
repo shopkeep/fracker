@@ -61,7 +61,32 @@ var _ = Describe("Fracker", func() {
 				})
 
 				It(`writes the last segment of the node's value in KEY=VALUE format`, func() {
-					Expect(out.String()).To(Equal("BAAAAAZ=crunch\n"))
+					Expect(out.String()).To(ContainSubstring("BAAAAAZ=crunch\n"))
+				})
+			})
+
+			Context(`and the name contains hyphens`, func() {
+				BeforeEach(func() {
+					client.StubGet = func(key string) (f.Node, error) {
+						n := &etcd.Node{
+							Dir:   false,
+							Key:   "/foo/fun-times",
+							Value: "crunch",
+						}
+						return f.NewNode(n), nil
+					}
+				})
+
+				JustBeforeEach(func() {
+					err = fracker.Frack(out, []string{"/foo/fun-times"})
+				})
+
+				It(`does not return an error`, func() {
+					Expect(err).To(BeNil())
+				})
+
+				It(`writes the key's name replacing the hyphens with underscores`, func() {
+					Expect(out.String()).To(ContainSubstring("FUN_TIMES=crunch\n"))
 				})
 			})
 
@@ -86,6 +111,11 @@ var _ = Describe("Fracker", func() {
 											Key:   "/foo/bar/qux",
 											Value: "munch",
 										},
+										&etcd.Node{
+											Dir:   false,
+											Key:   "/foo/bar/zoot-suit",
+											Value: "funch",
+										},
 									},
 								},
 							},
@@ -103,7 +133,9 @@ var _ = Describe("Fracker", func() {
 				})
 
 				It(`writes each value out in KEY=VALUE format (removing the prefix)`, func() {
-					Expect(out.String()).To(Equal("BAR_BAZ=crunch\nBAR_QUX=munch\n"))
+					Expect(out.String()).To(ContainSubstring("BAR_BAZ=crunch\n"))
+					Expect(out.String()).To(ContainSubstring("BAR_QUX=munch\n"))
+					Expect(out.String()).To(ContainSubstring("BAR_ZOOT_SUIT=funch\n"))
 				})
 			})
 		})
